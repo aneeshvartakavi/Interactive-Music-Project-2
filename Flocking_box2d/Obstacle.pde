@@ -24,8 +24,6 @@ class Obstacle
     
     ps.setAsBox(box2dW, box2dH);
 
-  
-    //b.createFixture(ps,1);
     FixtureDef fd = new FixtureDef();
     fd.density = 1;
     fd.friction = 0.5;
@@ -49,8 +47,7 @@ class Obstacle
     stroke(127);
     rectMode(CENTER);
     rect(x,y,w,h);
-   // rect(x,y,w+70,h+70);
-   
+    
   }
   
 }

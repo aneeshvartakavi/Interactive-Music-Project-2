@@ -91,7 +91,7 @@ void food()
 {
  health+=10; 
  println("Health!");
-}
+} 
 
   // Is the particle ready for deletion?
   
@@ -106,6 +106,7 @@ void food()
   }
   void run(ArrayList<Boid> boids) {
     flock(boids);
+    seekFood();
     seekMouse();
     //borders();
     display();
@@ -118,14 +119,48 @@ void checkHealth()
     if(health<=0)
     delete=true;
   }
+  
+  void reduceHealth(float f)
+  {
+    health=-f; 
+  }
+  
   // We accumulate a new acceleration each time based on three rules
  void seekMouse()
 {
   Vec2 mouse = box2d.coordPixelsToWorld(mouseX,mouseY);
   Vec2 seekMouse = seek(mouse);
   point = body.getWorldPoint(new Vec2(0,-0.4));
-  body.applyForce(seekMouse,point);
+ // body.applyForce(seekMouse,point);
 } 
+
+void seekFood()
+{  int count = foods.size();
+   if (count > 0)
+   { 
+   float[] distances = new float[count];
+   for (int i = 0; i<count; i++) {
+    Food f = foods.get(i);
+    //Vec2 loc = body.getPosition();
+    Vec2 loc = body.getWorldCenter();
+    Vec2 dist = loc.sub(f.getPos());
+    distances[i]=dist.length();
+    
+   }
+   float min;
+   int index;
+   min = distances[0];
+   index = 0;
+   for (int i = 1; i<count; i++) {
+      if(distances[i] < min)
+     index = i; 
+   }
+   Food f=foods.get(index);
+   Vec2 desired = seek(f.getPos());
+   body.applyForce(desired,body.getWorldPoint(new Vec2(0,-0.4)));
+   }
+  } 
+
   
   void flock(ArrayList<Boid> boids) {
     Vec2 sep = separate(boids);   // Separation

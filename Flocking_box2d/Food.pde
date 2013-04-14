@@ -14,6 +14,13 @@ class Food
 
 }
 
+  Food(float x, float y)
+  { location = new Vec2(x,y);
+    r=10;
+    makeBody(location.x,location.y,r);
+    body.setUserData(this);
+  }
+
   
   void display()
   {
@@ -30,26 +37,32 @@ class Food
     }
   
   boolean done() {
-    
-    //Vec2 pos = box2d.getBodyPixelCoord(body);
-    // Is it off the bottom of the screen?
-    if (delete == true) {
-      killBody();
-      return true;
-    }
+ if (delete == true) {
+   killBody();
+   return true;
+  }
     return false;
   }
   
+  Vec2 getPos() {
+   Vec2 pos = body.getWorldCenter(); 
+    return pos;
+  }
+  
+  void checkPos() {
+   // Check to see if the food is not in restricted area
+  
+ 
+ }
   
    void makeBody(float x, float y, float r) {
     // Define a body
     BodyDef bd = new BodyDef();
-    // Set its position
     bd.position = box2d.coordPixelsToWorld(x, y);
-    bd.type = BodyType.STATIC;
+    bd.type = BodyType.DYNAMIC;
     body = box2d.createBody(bd);
 
-    // Make the body's shape a circle
+   
     CircleShape cs = new CircleShape();
     cs.m_radius = box2d.scalarPixelsToWorld(r);
 
@@ -64,6 +77,5 @@ class Food
     // Attach fixture to body
     body.createFixture(fd);
 
-   // body.setAngularVelocity(random(-10, 10));
-  }
+   }
 }

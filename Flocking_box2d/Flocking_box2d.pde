@@ -28,6 +28,7 @@ PBox2D box2d;
 
 Flock flock;
 
+
 ArrayList<Hell> hells;
 ArrayList<Boundary> boundaries;
 ArrayList<Obstacle> obstacles;
@@ -112,15 +113,33 @@ void draw() {
     }
   }
   flock.run();
-  
+  randomBoid(0.001);
+  randomFood(0.002);
 }
 
 void mousePressed() {
-   flock.addBoid(new Boid(new PVector(mouseX,mouseY)));
+   //flock.addBoid(new Boid(new PVector(mouseX,mouseY)));
+   makeFood();
 }
 
 void mouseDragged() {
    flock.addBoid(new Boid(new PVector(mouseX,mouseY)));
+}
+
+void randomFood(float f) 
+{ 
+  if(random(1)<f)
+ foods.add(new Food()); 
+  }
+
+
+void randomBoid(float f)
+{  if(random(1)<f)
+   flock.addBoid(new Boid(new PVector(random(width),random(height))));
+}
+
+void makeFood() {
+  foods.add(new Food(mouseX, mouseY));
 }
 
 
