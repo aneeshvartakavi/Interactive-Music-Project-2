@@ -15,10 +15,18 @@ class Boid {
   color col;
   
   float health;
+  float densityBody;
   
   float maxforce;    // Maximum steering force
   float maxspeed;    // Maximum speed
   int note=0;
+  
+  //Force weights
+  float separationWeight=1;
+  float cohesionWeight=0;
+  float allignmentWeight=0;
+  float seekFoodWeight=0.8;
+  float seekMouseWeight=0;
   
   Vec2 point;
   Boid(PVector loc) {
@@ -26,14 +34,17 @@ class Boid {
     health = 100;
     r = box2d.scalarPixelsToWorld(r);
     col = color(175);
+   
+    densityBody = random(0.5,1.5);
+    maxspeed = 10;
+    maxforce = 10; 
     
-    // Add the box to the box2d world
-    makeBody(new Vec2(loc.x,loc.y),new Vec2(0,0),0);
+    makeBody(new Vec2(loc.x,loc.y));
     body.setUserData(this);
     point = body.getPosition();
     note = (int) random(2);
-    maxspeed = 10;
-    maxforce = 10;
+    
+
   }
   
 void note()
@@ -56,11 +67,13 @@ void note()
 
   // Change color when hit
   void wall() {
-    println("wall!");
+    //println("wall!");
   //  body.linearDamping = 100;
   }
   
   void hellBegin() { 
+    println("Hell begin");
+    reduceHealth(40);
     body.setLinearDamping(0.5);
     body.setAngularDamping(3);
 }
@@ -76,21 +89,21 @@ void hellEnd() {
 }
 
 void fluidBegin()
-{ 
+{ //println("begin");
   body.setLinearDamping(1);
   body.setAngularDamping(4);
-   
-}
+ }
 
 void fluidEnd()
-{ body.setAngularDamping(2);
+{ //println("end");
+  body.setAngularDamping(2);
   body.setLinearDamping(0.01);
 }
 
 void food()
 {
- health+=10; 
- println("Health!");
+ health+=20; 
+ //println("Health!");
 } 
 
   // Is the particle ready for deletion?
@@ -122,7 +135,7 @@ void checkHealth()
   
   void reduceHealth(float f)
   {
-    health=-f; 
+    health-=f;
   }
   
   // We accumulate a new acceleration each time based on three rules
@@ -130,12 +143,14 @@ void checkHealth()
 {
   Vec2 mouse = box2d.coordPixelsToWorld(mouseX,mouseY);
   Vec2 seekMouse = seek(mouse);
+  seekMouse.mulLocal(seekMouseWeight);
   point = body.getWorldPoint(new Vec2(0,-0.4));
- // body.applyForce(seekMouse,point);
+  body.applyForce(seekMouse,point);
 } 
 
 void seekFood()
 {  int count = foods.size();
+  // println(count);
    if (count > 0)
    { 
    float[] distances = new float[count];
@@ -151,12 +166,13 @@ void seekFood()
    int index;
    min = distances[0];
    index = 0;
-   for (int i = 1; i<count; i++) {
+   for (int i = 0; i<count; i++) {
       if(distances[i] < min)
      index = i; 
    }
    Food f=foods.get(index);
    Vec2 desired = seek(f.getPos());
+   desired.mulLocal(seekFoodWeight);
    body.applyForce(desired,body.getWorldPoint(new Vec2(0,-0.4)));
    }
   } 
@@ -168,9 +184,9 @@ void seekFood()
     Vec2 coh = cohesion(boids);   // Cohesion
     
     // Arbitrarily weight these forces
-    sep.mulLocal(1);
-    ali.mulLocal(0);
-    coh.mulLocal(0);
+    sep.mulLocal(separationWeight);
+    ali.mulLocal(allignmentWeight);
+    coh.mulLocal(cohesionWeight);
     
     // Add the force vectors to acceleration
     Vec2 loc = body.getWorldCenter();
@@ -218,27 +234,18 @@ void seekFood()
   
 
 
-  // Drawing the box
+  
   void display() {
-    // We look at each body and get its screen position
-      
-      fill(256,0,0);
-    //Vec2 mouse1 = box2d.coordPixelsToWorld(mouseX,mouseY);
+    fill(256,0,0);
     ellipse(mouseX,mouseY,20,20);
-
-    
     Vec2 pos = box2d.getBodyPixelCoord(body);
-    
-    // Get its angle of rotation
     float a = body.getAngle();
     
     Fixture f = body.getFixtureList();
-    
     PolygonShape ps = (PolygonShape) f.getShape();
     
     rectMode(CENTER);
-       
-    fill(127);
+    fill(256-127*densityBody);
     stroke(0);
     strokeWeight(1);
     pushMatrix();
@@ -255,7 +262,7 @@ void seekFood()
     fill(256,0,0);
     Vec2 pixelPos = box2d.coordWorldToPixels(point);
     ellipse(pixelPos.x, pixelPos.y,8,8);  
-    
+    //println(health);
     
 }
 
@@ -361,8 +368,8 @@ void seekFood()
     return sum;
   }
   
-  // This function adds the rectangle to the box2d world
-  void makeBody(Vec2 center, Vec2 vel, float avel) {
+  
+  void makeBody(Vec2 center) {
 
     // Define a polygon (this is what we use for a rectangle)
        
@@ -373,16 +380,11 @@ void seekFood()
     
     PolygonShape ps = new PolygonShape();
     ps.set(vertices, vertices.length);
-    //float box2dW = box2d.scalarPixelsToWorld(w_/2);
-    //float box2dH = box2d.scalarPixelsToWorld(h_/2);
     
-    //sd.setAsBox(box2dW, box2dH);
-
-    // Define a fixture
     FixtureDef fd = new FixtureDef();
     fd.shape = ps;
     // Parameters that affect physics
-    fd.density = 1;
+    fd.density=densityBody;
     fd.friction = 0.5;
     fd.restitution = 0.5;
 
@@ -396,9 +398,10 @@ void seekFood()
     
     body = box2d.createBody(bd);
     body.createFixture(fd);
-    
-    body.setLinearVelocity(vel);
-    body.setAngularVelocity(avel);
+    //bd.setDensity(1);
+    // body.getFixtureList().setDensity(2);
+    //body.setLinearVelocity(vel);
+   // body.setAngularVelocity(avel);
 
   }
   

@@ -21,7 +21,7 @@ class Sensor {
     y = y_;
     w = w_;
     h = h_;
-
+  
     // Define the polygon
     PolygonShape ps = new PolygonShape();
     // Figure out the box2d coordinates
@@ -30,12 +30,6 @@ class Sensor {
     // We're just a box
     ps.setAsBox(box2dW, box2dH);
 
-
-    // Create the body
-
-    // Attached the shape to the body using a Fixture
-    
-    //b.createFixture(ps,1);
     FixtureDef fd = new FixtureDef();
     fd.density = 1;
     fd.friction = 0.5;
@@ -54,8 +48,8 @@ class Sensor {
   }
 
   // Draw the boundary, if it were at an angle we'd have to do something fancier
-  void display() {
-    fill(0,0,200);
+  void display(){
+    fill(0,0,0);
     stroke(127);
     rectMode(CENTER);
     rect(x,y,w,h);

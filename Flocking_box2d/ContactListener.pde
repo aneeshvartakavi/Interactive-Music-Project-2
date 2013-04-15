@@ -35,9 +35,9 @@ void beginContact(Contact cp) {
   // Collisions between boids
   if (o1.getClass() == Boid.class && o2.getClass() == Boid.class) {
     Boid p1 = (Boid) o1;
-    p1.reduceHealth(5);
+   // p1.reduceHealth(5);
     Boid p2 = (Boid) o2;
-    p2.reduceHealth(5);
+   // p2.reduceHealth(5);
   }
 
   // Collisions with wall
@@ -54,24 +54,26 @@ void beginContact(Contact cp) {
   
   if (o1.getClass() == Hell.class && o2.getClass() == Boid.class) {
     Boid p = (Boid) o2;
-    p.reduceHealth(5);
+    //p.reduceHealth(5);
     p.hellBegin();
   }
   
   if (o2.getClass() == Hell.class && o1.getClass() == Boid.class) {
     Boid p = (Boid) o1;
-    p.reduceHealth(5);
+    //p.reduceHealth(5);
     p.hellBegin();
   }  
 
-    if (o1.getClass() == Fluid.class && o1.getClass() == Boid.class) {
+    if (o1.getClass() == Fluid.class && o2.getClass() == Boid.class) {
     Boid p = (Boid) o2;
     p.fluidBegin();
+    
   }
   
   if (o2.getClass() == Fluid.class && o1.getClass() == Boid.class) {
     Boid p = (Boid) o1;
     p.fluidBegin();
+    
   }  
   
    if (o1.getClass() == Food.class && o2.getClass() == Boid.class) {

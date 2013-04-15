@@ -16,7 +16,7 @@ class Flock {
     for (int i = boids.size()-1; i >= 0; i--) {
     Boid b = boids.get(i);
     b.run(boids);
-    b.display();
+    //b.display();
     // Particles that leave the screen, we delete them
     // (note they have to be deleted from both the box2d world and our list
     if (b.done()) {

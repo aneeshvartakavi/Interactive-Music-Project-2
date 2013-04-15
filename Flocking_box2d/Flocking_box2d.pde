@@ -1,12 +1,6 @@
-// Flocking
-// Daniel Shiffman <http://www.shiffman.net>
-// The Nature of Code
+// Flocking based on Daniel Shiffman's code
 
-// Demonstration of Craig Reynolds' "Flocking" behavior
-// See: http://www.red3d.com/cwr/
-// Rules: Cohesion, Separation, Alignment
 
-// Click mouse to add boids into the system
 
 import pbox2d.*;
 import org.jbox2d.common.*;
@@ -17,6 +11,13 @@ import org.jbox2d.common.*;
 import org.jbox2d.dynamics.*;
 import org.jbox2d.dynamics.contacts.*;
 
+import org.jbox2d.callbacks.DebugDraw;
+import org.jbox2d.callbacks.TreeCallback;
+import org.jbox2d.callbacks.TreeRayCastCallback;
+import org.jbox2d.collision.AABB;
+import org.jbox2d.collision.RayCastInput;
+import org.jbox2d.common.Vec2;
+
 import oscP5.*;
 import netP5.*;
 
@@ -25,6 +26,7 @@ NetAddress myRemoteLocation;
 
 // A reference to our box2d world
 PBox2D box2d;
+//b2AABB a;
 
 Flock flock;
 
