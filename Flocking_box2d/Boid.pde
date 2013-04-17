@@ -1,18 +1,12 @@
-// Flocking
-// Daniel Shiffman <http://www.shiffman.net>
-// The Nature of Code
-
-// Boid class
-// Methods for Separation, Cohesion, Alignment added
-
 class Boid {
 
   // We need to keep track of a Body and a width and height
   Body body;
+  //AlphaBoid b1;
   float r; // Length of the triangle
     
   boolean delete = false;
-  color col;
+ // color col;
   
   float health;
   float densityBody;
@@ -28,12 +22,17 @@ class Boid {
   float seekFoodWeight=0.8;
   float seekMouseWeight=0;
   
+  float sepDistance = 60;
+  boolean isAlpha=false;
+  
   Vec2 point;
+  PolygonShape ps =  new PolygonShape();
+  
   Boid(PVector loc) {
     r=100;
     health = 100;
     r = box2d.scalarPixelsToWorld(r);
-    col = color(175);
+   // col = color(175);
    
     densityBody = random(0.5,1.5);
     maxspeed = 10;
@@ -42,62 +41,71 @@ class Boid {
     makeBody(new Vec2(loc.x,loc.y));
     body.setUserData(this);
     point = body.getPosition();
-    note = (int) random(2);
+    note = (int) random(7);
+   }
+   
+  Boid(PVector loc, boolean alpha, float heal) {
+    r=100;
+    health = heal;
+    r = box2d.scalarPixelsToWorld(r);
+   // col = color(175);
+   
+    densityBody = random(0.5,1.5);
+    maxspeed = 10;
+    maxforce = 10; 
     
+    makeBody(new Vec2(loc.x,loc.y));
+    body.setUserData(this);
+    point = body.getPosition();
+    note = (int) random(7);
+    isAlpha = alpha;
+   }
 
-  }
+
   
 void note()
-{ OscMessage myMessage = new OscMessage("/test");
-  if(note==1)
-  note=5;
+{ OscMessage myMessage = new OscMessage("/note");
   myMessage.add(note);
   oscP5.send(myMessage, myRemoteLocation); 
-  
 }
 
   // This function removes the particle from the box2d world
-  void killBody() {
-    box2d.destroyBody(body);
-  }
-
-    void delete() {
-    delete = true;
-  }
 
   // Change color when hit
   void wall() {
-    //println("wall!");
-  //  body.linearDamping = 100;
+     
   }
   
-  void hellBegin() { 
-    println("Hell begin");
+void hellBegin() { 
+    if(isAlpha==false) {
     reduceHealth(40);
     body.setLinearDamping(0.5);
     body.setAngularDamping(3);
+    }
 }
 
 void hellEnd() {
-  
+     if(isAlpha==false) {
     Vec2 vel=body.getLinearVelocity();
     vel.mulLocal(-2);
     Vec2 loc = body.getWorldCenter();
     body.applyForce(vel,loc);   
    //body.applyAngularImpulse(50);
-  
+     }
 }
 
 void fluidBegin()
-{ //println("begin");
+{  if(isAlpha==false) {
   body.setLinearDamping(1);
   body.setAngularDamping(4);
  }
+}
 
 void fluidEnd()
-{ //println("end");
+{  if(isAlpha==false) {
   body.setAngularDamping(2);
   body.setLinearDamping(0.01);
+}
 }
 
 void food()
@@ -106,17 +114,14 @@ void food()
  //println("Health!");
 } 
 
-  // Is the particle ready for deletion?
-  
- boolean done() {
-    // Let's find the screen position of the particle
-    
-   if (delete) {
+boolean done() {
+if (delete) {
       killBody();
       return true;
     }
     return false;
   }
+
   void run(ArrayList<Boid> boids) {
     flock(boids);
     seekFood();
@@ -125,17 +130,23 @@ void food()
     display();
     checkHealth();
   }
-  
+
 void checkHealth()
-  {
+  {  if(isAlpha==false) {
     health-=0.05;
+  }
     if(health<=0)
     delete=true;
   }
   
   void reduceHealth(float f)
-  {
+  {  if(isAlpha==false) {
     health-=f;
+  }
+  }
+  
+    void killBody() {
+    box2d.destroyBody(body);
   }
   
   // We accumulate a new acceleration each time based on three rules
@@ -150,12 +161,13 @@ void checkHealth()
 
 void seekFood()
 {  int count = foods.size();
-  // println(count);
+  
    if (count > 0)
    { 
    float[] distances = new float[count];
    for (int i = 0; i<count; i++) {
     Food f = foods.get(i);
+    //Fixture abc = body.getShapeList();
     //Vec2 loc = body.getPosition();
     Vec2 loc = body.getWorldCenter();
     Vec2 dist = loc.sub(f.getPos());
@@ -232,9 +244,7 @@ void seekFood()
     return steer;
   }
   
-
-
-  
+ 
   void display() {
     fill(256,0,0);
     ellipse(mouseX,mouseY,20,20);
@@ -258,18 +268,22 @@ void seekFood()
     }
     endShape(CLOSE);
     popMatrix();
-
-    fill(256,0,0);
+    
+    if(isAlpha== true) {
+    fill(0,0,256);}
+    else {
+    fill(256,0,0); }
+    
     Vec2 pixelPos = box2d.coordWorldToPixels(point);
     ellipse(pixelPos.x, pixelPos.y,8,8);  
-    //println(health);
+    
     
 }
 
   // Separation
   // Method checks for nearby boids and steers away
   Vec2 separate (ArrayList<Boid> boids) {
-    float desiredseparation = box2d.scalarPixelsToWorld(100);
+    float desiredseparation = box2d.scalarPixelsToWorld(sepDistance);
     
     Vec2 steer = new Vec2(0,0);
     int count = 0;
@@ -378,7 +392,7 @@ void seekFood()
     vertices[1] = box2d.vectorPixelsToWorld(new Vec2(-r,-2*r));
     vertices[2] = box2d.vectorPixelsToWorld(new Vec2(r,-2*r));
     
-    PolygonShape ps = new PolygonShape();
+    //PolygonShape ps = new PolygonShape();
     ps.set(vertices, vertices.length);
     
     FixtureDef fd = new FixtureDef();

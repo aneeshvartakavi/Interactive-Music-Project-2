@@ -1,10 +1,3 @@
-// The Nature of Code
-// <http://www.shiffman.net/teaching/nature>
-// Spring 2012
-// PBox2D example
-
-// A fixed boundary class
-
 class Sensor {
 
   // A boundary is a simple rectangle with x,y,width,and height

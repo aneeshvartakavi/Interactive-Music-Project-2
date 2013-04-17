@@ -1,9 +1,3 @@
-// The Nature of Code
-// <http://www.shiffman.net/teaching/nature>
-// Spring 2010
-// PBox2D example
-
-// ContactListener to listen for collisions!
 
 import org.jbox2d.callbacks.ContactImpulse;
 import org.jbox2d.callbacks.ContactListener;
@@ -17,10 +11,6 @@ import org.jbox2d.dynamics.contacts.Contact;
   // Collision event functions!
 void beginContact(Contact cp) {
   
-//  if(cp.isTouching())
-//  { println("touch me!");
-//  
-//  }
   // Get both shapes
   Fixture f1 = cp.getFixtureA();
   Fixture f2 = cp.getFixtureB();

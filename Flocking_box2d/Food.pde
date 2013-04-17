@@ -5,6 +5,8 @@ class Food
    Body body;
    float r;
    boolean delete = false;
+   
+   CircleShape cs = new CircleShape();
     
   Food()
   { location = new Vec2(random(width),random(height));
@@ -63,7 +65,7 @@ class Food
     body = box2d.createBody(bd);
 
    
-    CircleShape cs = new CircleShape();
+    
     cs.m_radius = box2d.scalarPixelsToWorld(r);
 
     FixtureDef fd = new FixtureDef();

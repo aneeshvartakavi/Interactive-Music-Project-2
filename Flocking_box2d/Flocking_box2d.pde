@@ -1,6 +1,4 @@
-// Flocking based on Daniel Shiffman's code
-
-
+// Flocking based on Daniel Shiffman's code <http://www.shiffman.net>
 
 import pbox2d.*;
 import org.jbox2d.common.*;
@@ -11,13 +9,22 @@ import org.jbox2d.common.*;
 import org.jbox2d.dynamics.*;
 import org.jbox2d.dynamics.contacts.*;
 
-import org.jbox2d.callbacks.DebugDraw;
-import org.jbox2d.callbacks.TreeCallback;
-import org.jbox2d.callbacks.TreeRayCastCallback;
-import org.jbox2d.collision.AABB;
-import org.jbox2d.collision.RayCastInput;
-import org.jbox2d.common.Vec2;
+//import org.jbox2d.callbacks.DebugDraw;
+//import org.jbox2d.callbacks.TreeCallback;
+//import org.jbox2d.callbacks.TreeRayCastCallback;
+//import org.jbox2d.collision.AABB;
+//import org.jbox2d.collision.RayCastInput;
+//import org.jbox2d.common.Vec2;
 
+
+//import org.jbox2d.collision.Distance.SimplexCache;
+//import org.jbox2d.collision.DistanceInput;
+//import org.jbox2d.collision.DistanceOutput;
+//import org.jbox2d.collision.shapes.PolygonShape;
+//
+//DistanceInput input = new DistanceInput();
+//SimplexCache cache = new SimplexCache();
+//DistanceOutput output = new DistanceOutput();
 import oscP5.*;
 import netP5.*;
 
@@ -26,9 +33,6 @@ NetAddress myRemoteLocation;
 
 // A reference to our box2d world
 PBox2D box2d;
-//b2AABB a;
-
-Flock flock;
 
 
 ArrayList<Hell> hells;
@@ -36,6 +40,9 @@ ArrayList<Boundary> boundaries;
 ArrayList<Obstacle> obstacles;
 ArrayList<Fluid> fluids;
 ArrayList<Food> foods;
+ArrayList<Boid> boids;
+//ArrayList<AlphaBoid> alphaBoids;
+
 
 void setup() {
   size(800,800);
@@ -76,11 +83,16 @@ void setup() {
   foods.add(new Food());
   foods.add(new Food());
   
-  flock = new Flock();
-  // Add an initial set of boids into the system
-  for (int i = 0; i < 1; i++) {
-    flock.addBoid(new Boid(new PVector(width/2,height/2)));
-  }
+  boids = new ArrayList<Boid>();
+ 
+ //for (int i = 0; i < 1; i++) {
+    boids.add(new Boid(new PVector(width/2,height/2)));
+    boids.add(new Boid(new PVector(width/4,height/2),true,300));
+//}
+  
+//  alphaBoids = new ArrayList<AlphaBoid>();
+//  alphaBoids.add(new AlphaBoid(new PVector(width/4,height/2)));
+  
   smooth();
 }
 
@@ -114,7 +126,24 @@ void draw() {
       foods.remove(i);
     }
   }
-  flock.run();
+  
+  for (int i = boids.size()-1; i >= 0; i--) {
+    Boid b = boids.get(i);
+    b.run(boids);
+    if (b.done()) {
+      boids.remove(i);
+    }
+  }
+  
+//    for (int i = alphaBoids.size()-1; i >= 0; i--) {
+//      AlphaBoid b = alphaBoids.get(i);
+//      b.run1(alphaBoids);
+//      if (b.done()) {
+//        alphaBoids.remove(i);
+//      }
+//    }
+  
+  
   randomBoid(0.001);
   randomFood(0.002);
 }
@@ -125,7 +154,7 @@ void mousePressed() {
 }
 
 void mouseDragged() {
-   flock.addBoid(new Boid(new PVector(mouseX,mouseY)));
+   //flock.addBoid(new Boid(new PVector(mouseX,mouseY)));
 }
 
 void randomFood(float f) 
@@ -137,7 +166,7 @@ void randomFood(float f)
 
 void randomBoid(float f)
 {  if(random(1)<f)
-   flock.addBoid(new Boid(new PVector(random(width),random(height))));
+    boids.add(new Boid(new PVector(random(width),random(height))));
 }
 
 void makeFood() {
