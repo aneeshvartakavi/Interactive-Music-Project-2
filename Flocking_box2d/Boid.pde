@@ -23,12 +23,13 @@ class Boid {
   float seekMouseWeight=0;
   
   float sepDistance = 60;
+  float sightRadius = 60;
   boolean isAlpha=false;
   
   Vec2 point;
   PolygonShape ps =  new PolygonShape();
   
-  Boid(PVector loc) {
+  Boid(PVector loc,int note1) {
     r=100;
     health = 100;
     r = box2d.scalarPixelsToWorld(r);
@@ -41,7 +42,7 @@ class Boid {
     makeBody(new Vec2(loc.x,loc.y));
     body.setUserData(this);
     point = body.getPosition();
-    note = (int) random(7);
+    note = note1;
    }
    
   Boid(PVector loc, boolean alpha, float heal) {
@@ -149,6 +150,10 @@ void checkHealth()
     box2d.destroyBody(body);
   }
   
+  Vec2 getPosition() {
+    return body.getWorldCenter();
+  }
+  
   // We accumulate a new acceleration each time based on three rules
  void seekMouse()
 {
@@ -182,12 +187,16 @@ void seekFood()
       if(distances[i] < min)
      index = i; 
    }
+   if(distances[index] < sightRadius)
+   {
    Food f=foods.get(index);
    Vec2 desired = seek(f.getPos());
    desired.mulLocal(seekFoodWeight);
+   
    body.applyForce(desired,body.getWorldPoint(new Vec2(0,-0.4)));
    }
-  } 
+  }
+} 
 
   
   void flock(ArrayList<Boid> boids) {
@@ -207,14 +216,12 @@ void seekFood()
     body.applyForce(coh,loc);
   }
 
-  // A method that calculates and applies a steering force towards a target
-  // STEER = DESIRED MINUS VELOCITY
+  
   Vec2 seek(Vec2 target) {
     Vec2 loc = body.getWorldCenter();
-    Vec2 desired = target.sub(loc);  // A vector pointing from the location to the target
+    Vec2 desired = target.sub(loc); 
     
-    // If the magnitude of desired equals 0, skip out of here
-    // (We could optimize this to check if x and y are 0 to avoid mag() square root
+    
     if (desired.length() == 0) return new Vec2(0,0);
 
     // Arrive Behavior
@@ -231,8 +238,6 @@ void seekFood()
       desired.mulLocal(maxspeed);
     }
     
-    // Steering = Desired minus Velocity
-    
     Vec2 vel = body.getLinearVelocity();
     Vec2 steer = desired.sub(vel);
     
@@ -246,8 +251,8 @@ void seekFood()
   
  
   void display() {
-    fill(256,0,0);
-    ellipse(mouseX,mouseY,20,20);
+//    fill(256,0,0);
+//    ellipse(mouseX,mouseY,20,20);
     Vec2 pos = box2d.getBodyPixelCoord(body);
     float a = body.getAngle();
     
@@ -280,36 +285,35 @@ void seekFood()
     
 }
 
-  // Separation
-  // Method checks for nearby boids and steers away
+  
   Vec2 separate (ArrayList<Boid> boids) {
     float desiredseparation = box2d.scalarPixelsToWorld(sepDistance);
     
     Vec2 steer = new Vec2(0,0);
     int count = 0;
-    // For every boid in the system, check if it's too close
+    
     Vec2 locA = body.getWorldCenter();
     for (Boid other : boids) {
       Vec2 locB = other.body.getWorldCenter();
       float d = dist(locA.x,locA.y,locB.x,locB.y);
-      // If the distance is greater than 0 and less than an arbitrary amount (0 when you are yourself)
+      
       if ((d > 0) && (d < desiredseparation)) {
-        // Calculate vector pointing away from neighbor
+        
         Vec2 diff = locA.sub(locB);
         diff.normalize();
-        diff.mulLocal(1.0/d);        // Weight by distance
+        diff.mulLocal(1.0/d); 
         steer.addLocal(diff);
-        count++;            // Keep track of how many
+        count++;           
       }
     }
-    // Average -- divide by how many
+   
     if (count > 0) {
       steer.mulLocal(1.0/count);
     }
 
-    // As long as the vector is greater than 0
+    
     if (steer.length() > 0) {
-      // Implement Reynolds: Steering = Desired - Velocity
+      
       steer.normalize();
       steer.mulLocal(maxspeed);
       Vec2 vel = body.getLinearVelocity();
@@ -323,8 +327,6 @@ void seekFood()
     return steer;
   }
 
-  // Alignment
-  // For every nearby boid in the system, calculate the average velocity
   Vec2 align (ArrayList<Boid> boids) {
     float neighbordist = box2d.scalarPixelsToWorld(50);
     Vec2 steer = new Vec2(0,0);
@@ -343,9 +345,9 @@ void seekFood()
       steer.mulLocal(1.0/count);
     }
 
-    // As long as the vector is greater than 0
+    
     if (steer.length() > 0) {
-      // Implement Reynolds: Steering = Desired - Velocity
+      
       steer.normalize();
       steer.mulLocal(maxspeed);
       Vec2 vel = body.getLinearVelocity();
@@ -384,25 +386,22 @@ void seekFood()
   
   
   void makeBody(Vec2 center) {
-
-    // Define a polygon (this is what we use for a rectangle)
-       
+    
     Vec2[] vertices = new Vec2[3];
     vertices[0] = box2d.vectorPixelsToWorld(new Vec2(0,2*r));
     vertices[1] = box2d.vectorPixelsToWorld(new Vec2(-r,-2*r));
     vertices[2] = box2d.vectorPixelsToWorld(new Vec2(r,-2*r));
     
-    //PolygonShape ps = new PolygonShape();
     ps.set(vertices, vertices.length);
-    
     FixtureDef fd = new FixtureDef();
     fd.shape = ps;
-    // Parameters that affect physics
+    
+    
     fd.density=densityBody;
     fd.friction = 0.5;
     fd.restitution = 0.5;
 
-    // Define the body and make it from the shape
+    
     BodyDef bd = new BodyDef();
     bd.type = BodyType.DYNAMIC;
     bd.position.set(box2d.coordPixelsToWorld(center));
@@ -412,13 +411,7 @@ void seekFood()
     
     body = box2d.createBody(bd);
     body.createFixture(fd);
-    //bd.setDensity(1);
-    // body.getFixtureList().setDensity(2);
-    //body.setLinearVelocity(vel);
-   // body.setAngularVelocity(avel);
-
-  }
-  
+    }
   
 }
 

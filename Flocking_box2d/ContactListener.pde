@@ -33,12 +33,12 @@ void beginContact(Contact cp) {
   // Collisions with wall
   if (o1.getClass() == Boundary.class && o2.getClass() == Boid.class) {
     Boid p = (Boid) o2;
-    p.note();
+  //  p.note();
     p.wall();
   }
   if (o2.getClass() == Boundary.class && o1.getClass() == Boid.class) {
     Boid p = (Boid) o1;
-    p.note();
+   // p.note();
     p.wall();
   }
   

@@ -1,4 +1,6 @@
 // Flocking based on Daniel Shiffman's code <http://www.shiffman.net>
+// Uses the PBox2D library by Daniel Shiffman, and the OSCP5 library by Andreas Schlegel
+
 
 import pbox2d.*;
 import org.jbox2d.common.*;
@@ -9,22 +11,6 @@ import org.jbox2d.common.*;
 import org.jbox2d.dynamics.*;
 import org.jbox2d.dynamics.contacts.*;
 
-//import org.jbox2d.callbacks.DebugDraw;
-//import org.jbox2d.callbacks.TreeCallback;
-//import org.jbox2d.callbacks.TreeRayCastCallback;
-//import org.jbox2d.collision.AABB;
-//import org.jbox2d.collision.RayCastInput;
-//import org.jbox2d.common.Vec2;
-
-
-//import org.jbox2d.collision.Distance.SimplexCache;
-//import org.jbox2d.collision.DistanceInput;
-//import org.jbox2d.collision.DistanceOutput;
-//import org.jbox2d.collision.shapes.PolygonShape;
-//
-//DistanceInput input = new DistanceInput();
-//SimplexCache cache = new SimplexCache();
-//DistanceOutput output = new DistanceOutput();
 import oscP5.*;
 import netP5.*;
 
@@ -41,8 +27,9 @@ ArrayList<Obstacle> obstacles;
 ArrayList<Fluid> fluids;
 ArrayList<Food> foods;
 ArrayList<Boid> boids;
-//ArrayList<AlphaBoid> alphaBoids;
 
+
+float locationX,locationY;
 
 void setup() {
   size(800,800);
@@ -51,8 +38,12 @@ void setup() {
   
   oscP5 = new OscP5(this,13000);
   myRemoteLocation = new NetAddress("127.0.0.1",12000);
-  
-  
+  //oscP5.plug(this,"test","/updateLocation");
+  oscP5.plug(this,"makeBoid","/makeBoid");
+  oscP5.plug(this,"makeFood","/makeFood");
+  oscP5.plug(this,"updateLocation","/updateLocation");
+  oscP5.plug(this,"triggerNotes","/triggerNotes");
+
   // Initialize box2d and create the world
   box2d = new PBox2D(this);
   box2d.createWorld();
@@ -86,15 +77,16 @@ void setup() {
   boids = new ArrayList<Boid>();
  
  //for (int i = 0; i < 1; i++) {
-    boids.add(new Boid(new PVector(width/2,height/2)));
-    boids.add(new Boid(new PVector(width/4,height/2),true,300));
+   // First boid in the list is an alpha boid. This should not change
+   boids.add(new Boid(new PVector(width/4,height/2),true,300)); 
+   boids.add(new Boid(new PVector(width/2,height/2),5));
+    
 //}
-  
-//  alphaBoids = new ArrayList<AlphaBoid>();
-//  alphaBoids.add(new AlphaBoid(new PVector(width/4,height/2)));
-  
+ 
   smooth();
-}
+} 
+  // OSC routing
+
 
 void draw() {
 
@@ -135,22 +127,20 @@ void draw() {
     }
   }
   
-//    for (int i = alphaBoids.size()-1; i >= 0; i--) {
-//      AlphaBoid b = alphaBoids.get(i);
-//      b.run1(alphaBoids);
-//      if (b.done()) {
-//        alphaBoids.remove(i);
-//      }
-//    }
-  
-  
   randomBoid(0.001);
   randomFood(0.002);
+//  triggerNotes();
+  display();
+}
+
+public void test(int theA, int theB) {
+  println("### plug event method. received a message /test.");
+  println(" 2 ints received: "+theA+", "+theB);  
 }
 
 void mousePressed() {
-   //flock.addBoid(new Boid(new PVector(mouseX,mouseY)));
-   makeFood();
+   boids.add(new Boid(new PVector(mouseX,mouseY),7));
+   //makeFood();
 }
 
 void mouseDragged() {
@@ -166,16 +156,133 @@ void randomFood(float f)
 
 void randomBoid(float f)
 {  if(random(1)<f)
-    boids.add(new Boid(new PVector(random(width),random(height))));
+    boids.add(new Boid(new PVector(random(width),random(height)),(int)random(7)));
 }
 
-void makeFood() {
-  foods.add(new Food(mouseX, mouseY));
+//void makeFood() {
+//  foods.add(new Food(mouseX, mouseY));
+//}
+
+void makeBoid()
+{ boids.add(new Boid(new PVector(random(width),random(height)),7));
+}
+
+void makeFood()
+{ 
+  foods.add(new Food(locationX,locationY));
+}
+
+void updateLocation(int a,int b) 
+{ println("updating!");
+  locationX=a;
+  locationY=b;
+  // update location in the boid code... a mouse circle is drawn for every boid. Correct that. Put that code in this script
+ }
+ 
+ void triggerNotes() {
+   Boid alpha = boids.get(0);
+//   println(alpha.isAlpha);
+   Vec2 pos = alpha.getPosition();
+   int count = boids.size();
+//   println(count);
+   float[] distances = new float[count];
+   int[] indices = new int[count];
+   if (count > 0)
+   { int counter=0;
+     
+   for (int i = 1; i<count; i++) {
+    Boid b = boids.get(i);
+//    println(b.isAlpha);
+    //Fixture abc = body.getShapeList();
+    Vec2 loc = b.getPosition();
+    Vec2 dist = loc.sub(pos);
+    distances[i]=dist.length();
+    counter++;
+    indices[i]=counter;
+   // println(indices[i]); 
+  }
+    
+  quicksort(distances,indices);
+  for (int i = 1; i<indices.length; i++) {
+//println(indices.length);
+  Boid b = boids.get(indices[i]);
+  int note = b.note;
+  int dist = (int) (distances[indices[i]]*10);
+  OscMessage myMessage = new OscMessage("/dist");
+  
+  myMessage.add(note); /* add an int to the osc message */
+  myMessage.add(dist); /* add a second int to the osc message */
+
+  /* send the message */
+  oscP5.send(myMessage, myRemoteLocation);
+    
+//   print(indices[i]);
+//   print("-");
+  }
+//  println("");
+}
+  
+   
+ }
+ 
+ void oscEvent(OscMessage theOscMessage) {
+  
+  if(theOscMessage.isPlugged()==false) {
+  
+  println("### received an unhandled osc message.");
+  println("### addrpattern\t"+theOscMessage.addrPattern());
+  println("### typetag\t"+theOscMessage.typetag());
+  }
+}
+
+void display() {
+  fill(256,0,0);
+    ellipse(locationX,locationY,20,20);
 }
 
 
+// Quicksort code from stackoverflow
 
+public static void quicksort(float[] main, int[] index) {
+    quicksort(main, index, 0, index.length - 1);
+}
 
+// quicksort a[left] to a[right]
+public static void quicksort(float[] a, int[] index, int left, int right) {
+    if (right <= left) return;
+    int i = partition(a, index, left, right);
+    quicksort(a, index, left, i-1);
+    quicksort(a, index, i+1, right);
+}
 
+// partition a[left] to a[right], assumes left < right
+private static int partition(float[] a, int[] index, 
+int left, int right) {
+    int i = left - 1;
+    int j = right;
+    while (true) {
+        while (less(a[++i], a[right]))      // find item on left to swap
+            ;                               // a[right] acts as sentinel
+        while (less(a[right], a[--j]))      // find item on right to swap
+            if (j == left) break;           // don't go out-of-bounds
+        if (i >= j) break;                  // check if pointers cross
+        exch(a, index, i, j);               // swap two elements into place
+    }
+    exch(a, index, i, right);               // swap with partition element
+    return i;
+}
 
+// is x < y ?
+private static boolean less(float x, float y) {
+    return (x < y);
+}
 
+// exchange a[i] and a[j]
+private static void exch(float[] a, int[] index, int i, int j) {
+    float swap = a[i];
+    a[i] = a[j];
+    a[j] = swap;
+    int b = index[i];
+    index[i] = index[j];
+    index[j] = b;
+}
