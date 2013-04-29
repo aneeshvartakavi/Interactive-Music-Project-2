@@ -127,8 +127,8 @@ void draw() {
     }
   }
   
-  randomBoid(0.001);
-  randomFood(0.002);
+//  randomBoid(0.001);
+//  randomFood(0.002);
 //  triggerNotes();
   display();
 }
@@ -163,8 +163,8 @@ void randomBoid(float f)
 //  foods.add(new Food(mouseX, mouseY));
 //}
 
-void makeBoid()
-{ boids.add(new Boid(new PVector(random(width),random(height)),7));
+void makeBoid(int a)
+{ boids.add(new Boid(new PVector(random(width),random(height)),a));
 }
 
 void makeFood()
@@ -187,6 +187,7 @@ void updateLocation(int a,int b)
 //   println(count);
    float[] distances = new float[count];
    int[] indices = new int[count];
+   int[] notes = new int[count];
    if (count > 0)
    { int counter=0;
      
@@ -199,14 +200,15 @@ void updateLocation(int a,int b)
     distances[i]=dist.length();
     counter++;
     indices[i]=counter;
+    notes[i]=b.note;
    // println(indices[i]); 
   }
     
   quicksort(distances,indices);
   for (int i = 1; i<indices.length; i++) {
 //println(indices.length);
-  Boid b = boids.get(indices[i]);
-  int note = b.note;
+  //Boid b = boids.get(indices[i]);
+  int note = notes[indices[i]];
   int dist = (int) (distances[indices[i]]*10);
   OscMessage myMessage = new OscMessage("/dist");
   
